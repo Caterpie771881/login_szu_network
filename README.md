@@ -13,7 +13,7 @@
 ## 下载项目
 
 ```
-https://github.com/Caterpie771881/login_szu_network.git
+git clone https://github.com/Caterpie771881/login_szu_network.git
 ```
 
 ## 给脚本赋予执行权限
