@@ -1,5 +1,19 @@
 #!/bin/bash
 
+echo "正在检查网络环境..."
+ping -c 1 -W 1 'drcom.szu.edu.cn' &> /dev/null
+if [ $? -eq 0 ]; then
+    echo "检查完成, 当前正处在深圳大学局域网下"
+else
+    echo -n "检查完成, 当前主机似乎并未接入深圳大学局域网, 是否仍要登陆? [y/N] "
+    read X
+    if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
+        :
+    else
+        exit 1
+    fi
+fi
+
 echo "正在登陆szu校园网, 请保证主机位于深圳大学局域网下"
 echo -n "请输入账号: "
 read ID
