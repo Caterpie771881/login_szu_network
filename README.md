@@ -59,7 +59,7 @@ python login_szu_network/login_szu_network.py
 1. 使用U盘等介质将本项目拷贝到机器上
 2. 如果你使用 ssh 连接到机器上, 那应该可以 ctrl-C ctrl-V 将文件内容拷贝过去
 3. 使用 scp、curl 等远程传输方式将本项目传输到目标主机
-4. 手动将精简版脚本 `login_szu_network.lite.sh` 写入机器(不推荐, 容易敲错)
+4. 手动将精简版脚本 `lite.sh` 写入机器(不推荐, 容易敲错)
 
 以防有人不知道怎么做:
 ```sh
