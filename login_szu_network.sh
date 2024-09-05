@@ -88,18 +88,17 @@ set_timed_task() {
     read X
     if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
         check_screen
-        if [ $? = 0 ]; then
+        CHECK=$?
+        if [ $CHECK -eq 0 ]; then
             echo "screen 功能异常, 可能无法设置定时任务"
-        elif [ $? = 2 ]; then
+        elif [ $CHECK -eq 2 ]; then
             echo "已存在定时任务, 是否覆盖或停止任务?"
             echo "[1]覆盖 [2]停止 [other]保持不变"
             read X
             if [ "$X" = '1' ]; then
-                PID=`screen -ls | grep -w login_szu_network | awk '{print $1}' | cut -d '.' -f1`
-                kill -9 $PID
+                close_timed_task
             elif [ "$X" = '2' ]; then
-                PID=`screen -ls | grep -w login_szu_network | awk '{print $1}' | cut -d '.' -f1`
-                kill -9 $PID
+                close_timed_task
                 echo "已停止"
                 return 0
             else
@@ -124,14 +123,22 @@ set_timed_task() {
     fi
 }
 
+close_timed_task() {
+    PID=`screen -ls | grep -w login_szu_network | awk '{print $1}' | cut -d '.' -f1`
+    kill -9 $PID
+    screen -wipe
+}
+
 check_screen() {
     screen --version &> /dev/null
     if [ $? -eq 0 ]; then
-        return 0
-    elif screen -ls login_szu_network | grep -q "login_szu_network"; then
-        return 2
+        screen_sessions=$(screen -ls)
+        if echo "$screen_sessions" | grep -q "login_szu_network"; then
+            return 2
+        fi
+        return 1
     fi
-    return 1
+    return 0
 }
 
 create_screen() {
