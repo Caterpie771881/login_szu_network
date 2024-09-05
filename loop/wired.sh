@@ -8,7 +8,7 @@ echo "[INFO] 定时任务开始"
 
 while true; do
     echo "[INFO] `date`: 执行连接任务"
-    RESP=(curl -s "http://172.30.255.42:801/eportal/portal/login" -G \
+    RESP=$(curl -s "http://172.30.255.42:801/eportal/portal/login" -G \
     -d "user_account=$ID" \
     -d "user_password=$PASSWORD")
     if echo "$RESP" | grep -q "Portal"; then
