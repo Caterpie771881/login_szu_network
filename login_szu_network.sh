@@ -74,7 +74,7 @@ wired_login() {
     if echo "$RESP" | grep -q "Portal"; then
         echo "登陆成功"
         return 1
-    elif echo "$RESP" | grep -1 "IP"; then
+    elif echo "$RESP" | grep -q "IP"; then
         echo "登陆成功"
         return 2
     else
@@ -84,31 +84,71 @@ wired_login() {
 }
 
 set_timed_task() {
-    # echo -n "是否需要设置定时任务防掉线? [y?N] "
-    # read X
-    # if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
-    #     echo -n "请输入间隔时间(单位: min) [1-59] "
-    #     read T
-    #     if [[ "$T" =~ ^[1-59]$ ]]; then
-    #         # 写入定时脚本
-    #         */"$T" * * * * /path/to/myscript.sh
-    #         echo "已创建定时任务"
-    #     else
-    #         echo "创建定时任务失败"
-    #     fi
-    # fi
+    echo -n "是否需要设置定时任务防掉线? [y?N] "
+    read X
+    if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
+        check_screen
+        if [ $? = 0 ]; then
+            echo "screen 功能异常, 可能无法设置定时任务"
+        elif [ $? = 2 ]; then
+            echo "已存在定时任务, 是否覆盖或停止任务?"
+            echo "[1]覆盖 [2]停止 [other]保持不变"
+            read X
+            if [ "$X" = '1' ]; then
+                PID=`screen -ls | grep -w login_szu_network | awk '{print $1}' | cut -d '.' -f1`
+                kill -9 $PID
+            elif [ "$X" = '2' ]; then
+                PID=`screen -ls | grep -w login_szu_network | awk '{print $1}' | cut -d '.' -f1`
+                kill -9 $PID
+                echo "已停止"
+                return 0
+            else
+                return 0
+            fi
+        fi
+        echo -n "请输入间隔时间(单位: min)"
+        read T
+        if ! [[ "$T" =~ ^[0-9]+$ ]]; then
+            echo "非法输入, 已停止创建定时任务"
+            return 0
+        fi
+        if [ "$NW" = '无线网' ]; then
+            create_screen login_szu_network "`dirname $0`/loop/wlan.sh $ID $PASSWORD $T"
+            echo "已创建定时任务"
+        elif [ "$NW" = '有线网' ]; then
+            create_screen login_szu_network "`dirname $0`/loop/wired.sh $ID $PASSWORD $T"
+            echo "已创建定时任务"
+        else
+            echo "未知的网络: $NW"
+        fi
+    fi
+}
+
+check_screen() {
+    screen --version &> /dev/null
+    if [ $? -eq 0 ]; then
+        return 0
+    elif screen -ls login_szu_network | grep -q "login_szu_network"; then
+        return 2
+    fi
+    return 1
+}
+
+create_screen() {
+    screen -dmS login_szu_network
+    screen -x -S $1 -p 0 -X stuff "$2\n"
 }
 
 show_logo
 echo "正在检查网络环境..."
 ping -c 1 -W 1 'drcom.szu.edu.cn' &> /dev/null
 if [ $? -eq 0 ]; then
-    echo "检查完成, 当前正处在深圳大学WLAN局域网下"
+    echo "检查完成, 当前正处在深圳大学WLAN环境下"
     NW='无线网'
 else
     ping -c 1 -W 1 '172.30.255.42' &> /dev/null
     if [ $? -eq 0 ]; then
-        echo "检查完成, 当前正处在深圳大学有线局域网下"
+        echo "检查完成, 当前正处在深圳大学有线网络环境下"
         NW='有线网'
     else
         network_notfound

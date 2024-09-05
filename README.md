@@ -66,8 +66,7 @@ python login_szu_network/login_szu_network.py
 # 这里假设主机上没有 vi/nano 等文本编辑器
 touch lite.sh
 echo 'curl -s "https://drcom.szu.edu.cn/" -X POST \'>>lite.sh
-echo '-H"User-Agent:Mozilla/5.0"\'>>lite.sh
-echo '-H"Content-Type:application/x-www-form-urlencoded" \'>>lite.sh
+echo '-H "Content-Type:application/x-www-form-urlencoded" \'>>lite.sh
 echo '--data-raw "DDDDD=$1&upass=$2&0MKKey=123456"'>>lite.sh
 # 使用方式
 chmod +x lite.sh
