@@ -28,9 +28,10 @@ network_notfound() {
     fi
 }
 
+browser='User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0'
 wlan_login() {
     RESP=$(curl -s 'https://drcom.szu.edu.cn/' -X POST \
-        -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0' \
+        -H  "$browser" \
         -H 'Accept: */*' \
         -H 'Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2' \
         -H 'Accept-Encoding: gzip, deflate, br, zstd' \
@@ -58,7 +59,7 @@ wlan_login() {
 wired_login() {
     IP=$(hostname -I | awk '{print $1}')
     RESP=$(curl -s "http://172.30.255.42:801/eportal/portal/login" -G \
-        -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0' \
+        -H "$browser" \
         -H 'Accept: */*' \
         -H 'Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2' \
         -H 'Accept-Encoding: gzip, deflate, br, zstd' \
@@ -112,10 +113,14 @@ set_timed_task() {
             return 0
         fi
         if [ "$NW" = '无线网' ]; then
-            create_screen login_szu_network "`dirname $0`/loop/wlan.sh $ID $PASSWORD $T"
+            filename="`dirname $0`/loop/wlan.sh"
+            chmod +x $filename
+            create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
             echo "已创建定时任务"
         elif [ "$NW" = '有线网' ]; then
-            create_screen login_szu_network "`dirname $0`/loop/wired.sh $ID $PASSWORD $T"
+            filename="`dirname $0`/loop/wired.sh"
+            chmod +x $filename
+            create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
             echo "已创建定时任务"
         else
             echo "未知的网络: $NW"
@@ -126,7 +131,7 @@ set_timed_task() {
 close_timed_task() {
     PID=`screen -ls | grep -w login_szu_network | awk '{print $1}' | cut -d '.' -f1`
     kill -9 $PID
-    screen -wipe
+    screen -wipe &> /dev/null
 }
 
 check_screen() {
