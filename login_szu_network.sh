@@ -31,7 +31,7 @@ network_notfound() {
 browser='User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0'
 wlan_login() {
     RESP=$(curl -s 'https://drcom.szu.edu.cn/' -X POST \
-        -H  "$browser" \
+        -H "$browser" \
         -H 'Accept: */*' \
         -H 'Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2' \
         -H 'Accept-Encoding: gzip, deflate, br, zstd' \
@@ -92,6 +92,13 @@ set_timed_task() {
         CHECK=$?
         if [ $CHECK -eq 0 ]; then
             echo "screen 功能异常, 可能无法设置定时任务"
+            echo "是否仍要尝试创建? [y/N]"
+            read X
+            if [ "$X" = 'y' ] || [ "$X" = 'Y' ]; then
+                :
+            else
+                return 0
+            fi
         elif [ $CHECK -eq 2 ]; then
             echo "已存在定时任务, 是否覆盖或停止任务?"
             echo "[1]覆盖 [2]停止 [other]保持不变"
@@ -106,25 +113,29 @@ set_timed_task() {
                 return 0
             fi
         fi
-        echo -n "请输入间隔时间(单位: min)"
-        read T
-        if ! [[ "$T" =~ ^[0-9]+$ ]]; then
-            echo "非法输入, 已停止创建定时任务"
-            return 0
-        fi
-        if [ "$NW" = '无线网' ]; then
-            filename="`dirname $0`/loop/wlan.sh"
-            chmod +x $filename
-            create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
-            echo "已创建定时任务"
-        elif [ "$NW" = '有线网' ]; then
-            filename="`dirname $0`/loop/wired.sh"
-            chmod +x $filename
-            create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
-            echo "已创建定时任务"
-        else
-            echo "未知的网络: $NW"
-        fi
+        create_timed_task
+    fi
+}
+
+create_timed_task() {
+    echo -n "请输入间隔时间(单位: min) "
+    read T
+    if ! [[ "$T" =~ ^[0-9]+$ ]]; then
+        echo "非法输入, 已停止创建定时任务"
+        return 0
+    fi
+    if [ "$NW" = '无线网' ]; then
+        filename="`dirname $0`/loop/wlan.sh"
+        chmod +x $filename
+        create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
+        echo "已创建定时任务"
+    elif [ "$NW" = '有线网' ]; then
+        filename="`dirname $0`/loop/wired.sh"
+        chmod +x $filename
+        create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
+        echo "已创建定时任务"
+    else
+        echo "未知的网络: $NW"
     fi
 }
 
