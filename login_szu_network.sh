@@ -162,7 +162,24 @@ create_screen() {
     screen -x -S $1 -p 0 -X stuff "$2\n"
 }
 
+#=============== mian ===============
+
 show_logo
+
+check_screen
+if [ $? -eq 2 ]; then
+    filename="`dirname $0`/loop/task.log"
+    if tail -n 1 $filename | grep "WARN"; then
+        close_timed_task
+    else
+        echo "检测到已存在的定时任务, 是否要停止? [y/N]"
+        read X
+        if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
+            close_timed_task
+        fi
+    fi
+fi
+
 echo "正在检查网络环境..."
 ping -c 1 -W 1 'drcom.szu.edu.cn' &> /dev/null
 if [ $? -eq 0 ]; then
