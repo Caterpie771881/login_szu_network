@@ -10,6 +10,38 @@ echo " |_|\___/ \_|| |_|_| |_|    (___/(_____)\____|    |_| |_|\____)\___)____|\
 echo "         (_____|                                                                           "
 }
 
+input_id_and_pwd() {
+    echo -n "请输入账号: "
+    read ID
+    echo -n "请输入密码: "
+    read -s PASSWORD
+    echo ""
+}
+
+remember_me() {
+    echo -n "是否要保存账密信息? [y/N] "
+    read X
+    local filename="`dirname $0`/memory"
+    if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
+        ID_=`echo $ID |tr -d '\n' |od -An -tx1|tr -d '*\n' |tr ' ' %`
+        PASSWORD_=`echo $PASSWORD |tr -d '\n' |od -An -tx1 |tr -d '*\n' |tr ' ' %`
+        echo "$ID_;$PASSWORD_" > $filename
+    fi
+}
+
+urldecode() {
+    local regex='s/\\/\\\\/g;s/\(%\)\([0-9a-fA-F][0-9a-fA-F]\)/\\x\2/g'
+    printf $(echo -n $1 | sed $regex) 2>/dev/null
+}
+
+read_memory() {
+    local filename="`dirname $0`/memory"
+    ID_=`cat $filename | awk -F';' '{print \$1}'`
+    ID=$(urldecode $ID_)
+    PASSWORD_=`cat $filename | awk -F';' '{print \$2}'`
+    PASSWORD=$(urldecode $PASSWORD_)
+}
+
 network_notfound() {
     echo -n "当前主机似乎并未接入深圳大学局域网, 是否仍要登陆? [y/N] "
     read X
@@ -85,7 +117,7 @@ wired_login() {
 }
 
 set_timed_task() {
-    echo -n "是否需要设置定时任务防掉线? [y?N] "
+    echo -n "是否需要设置定时任务防掉线? [y/N] "
     read X
     if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
         check_screen
@@ -125,12 +157,12 @@ create_timed_task() {
         return 0
     fi
     if [ "$NW" = '无线网' ]; then
-        filename="`dirname $0`/loop/wlan.sh"
+        local filename="`dirname $0`/loop/wlan.sh"
         chmod +x $filename
         create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
         echo "已创建定时任务"
     elif [ "$NW" = '有线网' ]; then
-        filename="`dirname $0`/loop/wired.sh"
+        local filename="`dirname $0`/loop/wired.sh"
         chmod +x $filename
         create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
         echo "已创建定时任务"
@@ -162,6 +194,13 @@ create_screen() {
     screen -x -S $1 -p 0 -X stuff "$2\n"
 }
 
+after_login() {
+    if [ $MEM -eq 0 ]; then
+        remember_me
+    fi
+    set_timed_task
+}
+
 #=============== mian ===============
 
 show_logo
@@ -172,7 +211,7 @@ if [ $? -eq 2 ]; then
     if tail -n 1 $filename | grep "WARN"; then
         close_timed_task
     else
-        echo "检测到已存在的定时任务, 是否要停止? [y/N]"
+        echo -n "检测到已存在的定时任务, 是否要停止? [y/N]"
         read X
         if [ "$X" = "y" ] || [ "$X" = "Y" ]; then
             close_timed_task
@@ -196,21 +235,29 @@ else
 fi
 
 echo "正在登陆szu校园网 [$NW]"
-echo -n "请输入账号: "
-read ID
-echo -n "请输入密码: "
-read -s PASSWORD
-echo ""
+read_memory
+MEM=0
+if [ $? -eq 0 ]; then
+    echo -n "检测到用户记录: [$ID]; 是否使用该用户登录 [Y/n] "
+    read X
+    if [ "$X" = "n" ] || [ "$X" = "N" ]; then
+        input_id_and_pwd
+    else
+        MEM=1
+    fi
+else
+    input_id_and_pwd
+fi
 
 if [ "$NW" = '无线网' ]; then
     wlan_login
     if [ $? -eq 1 ]; then
-        set_timed_task
+        after_login
     fi
 elif [ "$NW" = '有线网' ]; then
     wired_login
     if [ $? -eq 1 ]; then
-        set_timed_task
+        after_login
     fi
 else
     echo "未知的网络: $NW"
