@@ -199,7 +199,7 @@ show_logo
 check_screen
 if [ $? -eq 2 ]; then
     filename="`dirname $0`/loop/task.log"
-    if tail -n 1 $filename | grep "WARN"; then
+    if tail -n 1 $filename | grep "ERROR"; then
         close_timed_task
     else
         echo -n "检测到已存在的定时任务, 是否要停止? [y/N]"

@@ -21,6 +21,7 @@ wired() {
         log "[INFO] 登陆成功"
     else
         log "[WARN] 登陆失败"
+        FAIL+=1
     fi
 }
 
@@ -32,10 +33,13 @@ wlan() {
         log "[INFO] 登陆成功"
     else
         log "[WARN] 登陆失败"
+        FAIL+=1
     fi
 }
 
 log "[INFO] 定时任务开始"
+
+FAIL=0
 
 while true; do
     log "[INFO] `date`: 执行连接任务"
@@ -45,6 +49,10 @@ while true; do
         wired
     else
         log "[ERROR] 未知的网络: $NW"
+        break
+    fi
+    if [ $FAIL > 5 ]; then
+        log "[ERROR] 失败次数过多, 已结束任务"
         break
     fi
     sleep $(($T*60))
