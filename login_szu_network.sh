@@ -156,19 +156,10 @@ create_timed_task() {
         echo "非法输入, 已停止创建定时任务"
         return 0
     fi
-    if [ "$NW" = '无线网' ]; then
-        local filename="`dirname $0`/loop/wlan.sh"
-        chmod +x $filename
-        create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
-        echo "已创建定时任务"
-    elif [ "$NW" = '有线网' ]; then
-        local filename="`dirname $0`/loop/wired.sh"
-        chmod +x $filename
-        create_screen login_szu_network "bash $filename $ID $PASSWORD $T"
-        echo "已创建定时任务"
-    else
-        echo "未知的网络: $NW"
-    fi
+    local filename="`dirname $0`/loop/login.sh"
+    chmod +x $filename
+    create_screen login_szu_network "bash $filename $NW $ID $PASSWORD $T"
+    echo "已创建定时任务"
 }
 
 close_timed_task() {
